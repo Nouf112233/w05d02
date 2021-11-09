@@ -12,7 +12,12 @@ const fs=require("fs");
 // {id:4 , name:"Sputnik" ,isfave:false ,isdeleted:false},
 // {id:5 , name:"1BR" ,isfave:false ,isdeleted:false}]
 
+let movies;
 
+fs.readFile("./movies.json",(err,data)=>{
+  movies=JSON.parse(data.toString());
+  res.status(201).json(movies);
+});
 
 function addtofile(movie)
 {
@@ -25,8 +30,7 @@ function addtofile(movie)
 
 
 app.get("/movies", (req, res) => {
-    fs.readFile("./movies.json",(err,data)=>{
-        let movies=JSON.parse(data.toString());
+    
 
     if (movies.length) {
         res.status(200);
@@ -36,13 +40,12 @@ app.get("/movies", (req, res) => {
         res.json("movies not found");
       }
     
-});
+
 });
 
 app.get("/notdeletmov", (req, res) => {
 
-    fs.readFile("./movies.json",(err,data)=>{
-        let movies=JSON.parse(data.toString());
+    
         const found = movies.filter(ele => {
             return ele.isdeleted === false;
           });
@@ -56,7 +59,7 @@ app.get("/notdeletmov", (req, res) => {
           }
       
 
-    });
+    
 
 })
 
@@ -64,8 +67,7 @@ app.get("/movieid", (req, res) => {
 
     const {id} = req.query;
 
-    fs.readFile("./movies.json",(err,data)=>{
-        let movies=JSON.parse(data.toString());
+   
         const found = movies.find(ele => {
             return ele.id == id;
           });
@@ -79,13 +81,12 @@ app.get("/movieid", (req, res) => {
           }
         
 
-    });
+    
 
 })
 
 app.post("/create", (req, res) => {
-    fs.readFile("./movies.json",(err,data)=>{
-        let movies=JSON.parse(data.toString());
+    
     
     const { id, name, isfave,isdeleted } = req.body;
     const newmovie = {
@@ -96,54 +97,48 @@ app.post("/create", (req, res) => {
     };
     movies.push({ id, name, isfave,isdeleted });
     addtofile(movies);
-    res.status(200);
-    res.json({ id, name, isfave,isdeleted });
-});
+
   });
 
   app.put("/put", (req, res) => {
-    fs.readFile("./movies.json",(err,data)=>{
-        let movies=JSON.parse(data.toString());
+    let check=false;
     const { id } = req.query;
-    const found = movies.find((ele) => {
-      return ele.id== id;
-    });
-    if (found) {
-      let update = {
-        id: found.id,
-        name: found.name,
-        isfave: req.body.isfave,
-        isdeleted:req.body.isdeleted
-      };
-      let targetIndex = movies.indexOf(found);
-      console.log(targetIndex)
-      movies.splice(targetIndex, 1, update);
-      addtofile(movies);
-      res.json(movies);
+    const {name ,isfave,isdeleted}=req.body;
+    movies.foreach(movie=>{
+      if(movie.id == id){
+        check=true;
+        if(name != undefined) movie.name=req.body.name;
+        if(isfave != undefined) movie.isfave =req.body.name;
+        if(isdeleted != undefined) movie.isdeleted=req.body.isdeleted;
+      }
+    })
+    if (check) {
+      addtofile(movies)
+      
     } else {
       res.status(404);
       res.json("movie not found");
     }
-});
+
   });
 
   app.delete("/delete", (req, res) => {
-    fs.readFile("./movies.json",(err,data)=>{
-        let movies=JSON.parse(data.toString());
+    let check=false;
     const { id } = req.query;
-    const found = movies.find(ele => ele.id == id); 
-    if (found) {
-      let targetIndex = movies.indexOf(found);
-      console.log(targetIndex)
-      movies.splice(targetIndex, 1);
-      res.status(200);
-      addtofile(movies);
-      res.json(movies);
+    movies.foreach(movie=>{
+      if(movie.id == id){
+        movie.isdeleted = true;
+        check= true;
+      }
+    })
+    if (check) {
+     
+      addtofile(movies)
       } else {
       res.status(404);
       res.json("movie not found");
     }
-})
+
   });
   
 
